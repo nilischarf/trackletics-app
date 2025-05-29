@@ -50,6 +50,21 @@ class Login(Resource):
 
 api.add_resource(Login, '/login')
 
+class CheckSession(Resource):
+    def get(self):
+        user_id = session.get('user_id')
+        if not user_id:
+            return {}, 401
+
+        user = db.session.get(User, user_id)
+        if not user:
+            return {}, 401
+
+        return user.to_dict(), 200
+
+api.add_resource(CheckSession, '/check_session')
+
+
 if __name__ == '__main__':
     app.run(port=5555, debug=True)
 
