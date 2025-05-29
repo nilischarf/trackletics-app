@@ -45,3 +45,22 @@ class User(db.Model, SerializerMixin):
 
     def __repr__(self):
         return f'User {self.id}: {self.username}'
+
+class Calorie(db.Model, SerializerMixin):
+    __tablename__ = 'calories'
+
+    id = db.Column(db.Integer, primary_key=True)
+    calories_burned = db.Column(db.Integer)
+
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    workout_id = db.Column(db.Integer, db.ForeignKey('workouts.id'))
+
+    user = db.relationship("User", back_populates="calories")
+    workout = db.relationship("Workout", back_populates="calories")
+    
+    serialize_rules = ('-user.calories', '-workout.calories')
+    
+    # Add validations if need 
+    
+    def __repr__(self):
+        return f'<Calorie {self.id}>'
