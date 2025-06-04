@@ -1,9 +1,8 @@
-from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import MetaData
-from sqlalchemy.orm import validates
 from sqlalchemy_serializer import SerializerMixin
 from sqlalchemy.ext.associationproxy import association_proxy
-from config import db
+from sqlalchemy import MetaData
+from flask_sqlalchemy import SQLAlchemy
+from config import app, db
 
 metadata = MetaData(naming_convention={
     "fk": "fk_%(table_name)s_%(column_0_name)s_%(referred_table_name)s",
@@ -17,12 +16,12 @@ class Workout(db.Model, SerializerMixin):
 
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String)
-    # can add more attributes - difficulty = db.Column(db.Integer)
+    difficulty = db.Column(db.Integer)
 
-    calories = db.relationship("Calorie", back_populates="workout", cascade="all, delete")
-    users = association_proxy('calories', 'user')
+    health_stats = db.relationship("HealthStat", back_populates="workout", cascade="all, delete")
+    users = association_proxy('health_stats', 'user')
     
-    serialize_rules = ('-calories',)
+    serialize_rules = ('-health_stats',)
 
     # add validations if need 
     
@@ -36,31 +35,33 @@ class User(db.Model, SerializerMixin):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String, unique=True)
 
-    calories = db.relationship("Calorie", back_populates="user", cascade="all, delete")
-    workouts = association_proxy('calories', 'workout')
+    health_stats = db.relationship("HealthStat", back_populates="user", cascade="all, delete")
+    workouts = association_proxy('health_stats', 'workout')
 
-    serialize_rules = ('-calories',)
+    serialize_rules = ('-health_stats',)
 
     # add validations if need 
 
     def __repr__(self):
         return f'User {self.id}: {self.username}'
 
-class Calorie(db.Model, SerializerMixin):
-    __tablename__ = 'calories'
+class HealthStat(db.Model, SerializerMixin):
+    __tablename__ = 'health_stats'
 
     id = db.Column(db.Integer, primary_key=True)
     calories_burned = db.Column(db.Integer)
+    hydration = db.Column(db.Integer)
+    soreness = db.Column(db.Integer)
 
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
     workout_id = db.Column(db.Integer, db.ForeignKey('workouts.id'))
 
-    user = db.relationship("User", back_populates="calories")
-    workout = db.relationship("Workout", back_populates="calories")
+    user = db.relationship("User", back_populates="health_stats")
+    workout = db.relationship("Workout", back_populates="health_stats")
     
-    serialize_rules = ('-user.calories', '-workout.calories')
+    serialize_rules = ('-user.health_stats', '-workout.health_stats')
     
     # Add validations if need 
     
     def __repr__(self):
-        return f'<Calorie {self.id}>'
+        return f'<HealthStat {self.id}>'

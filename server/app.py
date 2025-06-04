@@ -11,7 +11,7 @@ from flask_restful import Api, Resource
 from config import app, db, api
 
 # Add your model imports
-from models import db, User
+from models import User
 
 app = Flask(__name__)
 app.secret_key = b'Y\xf1Xz\x00\xad|eQ\x80t \xca\x1a\x10K'
@@ -39,6 +39,7 @@ class Login(Resource):
             username = data.get('username')
 
             new_user = User(username=username)
+            session['user_id'] = new_user.id
             db.session.add(new_user)
             db.session.commit()
             response_dict = new_user.to_dict()
