@@ -1,31 +1,11 @@
-#!/usr/bin/env python3
-
-# Standard library imports
-
-# Remote library imports
 from flask import Flask, make_response, jsonify, request, session
+from flask_restful import Resource
+from config import create_app, db, api
 from flask_migrate import Migrate
-from flask_restful import Api, Resource
-
-# Local imports
-from config import app, db, api
-
-# Add your model imports
 from models import User
 
-app = Flask(__name__)
-app.secret_key = b'Y\xf1Xz\x00\xad|eQ\x80t \xca\x1a\x10K'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.json.compact = False
-
-migrate = Migrate(app, db)
-
-db.init_app(app)
-
-api = Api(app)
-
-# Views go here!
+app = create_app()
+migrate = Migrate(app, db)  
 
 @app.route('/') 
 def home():
@@ -34,18 +14,14 @@ def home():
 class Login(Resource):
     def post(self):
         data = request.get_json()
-
         try: 
             username = data.get('username')
-
             new_user = User(username=username)
-            session['user_id'] = new_user.id
             db.session.add(new_user)
             db.session.commit()
+            session['user_id'] = new_user.id
             response_dict = new_user.to_dict()
-            response = make_response(response_dict, 201)
-            return response
-        
+            return make_response(response_dict, 201)
         except (ValueError, TypeError) as e:
             return {'errors': ['validation errors']}, 400
 
@@ -72,7 +48,13 @@ class CheckSession(Resource):
 
 api.add_resource(CheckSession, '/check_session')
 
+class Workouts(Resource):
+    def get(self):
+        workout_list = [w.to_dict() for w in Workout.query.all()]
+        response = make_response(wokrout_list, 200,)
+        return response
+
+api.add_resource(Workouts, '/workouts')
 
 if __name__ == '__main__':
     app.run(port=5555, debug=True)
-

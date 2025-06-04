@@ -7,53 +7,36 @@ from random import randint, choice as rc
 from faker import Faker
 
 # Local imports
-from app import app
-from models import db, Workout, User, HealthStat
+from config import create_app, db
+from models import Workout, User, HealthStat
 
+app=create_app()
 fake = Faker()
 
 def create_workouts():
-    workouts = []
-    for _ in range(10):
-        w = Workout(
-            name=fake.sentence(),
-            difficulty=randint(1, 5)
-        )
-        workouts.append(w)
-
-    return workouts
+    return [Workout(name=fake.sentence(), category=fake.sentence(), difficulty=randint(1, 5)) for _ in range(10)]
 
 def create_users():
-    users = []
-    for _ in range(5):
-        u = User(
-            username=fake.name(),
-        )
-        users.append(u)
-
-    return users
+    return [User(username=fake.name()) for _ in range(5)]
 
 def create_health_stats(workouts, users):
-    health_stats = []
-    for _ in range(20):
-        h = HealthStat(
+    return [
+        HealthStat(
             calories_burned=rc(range(500)),
             hydration=randint(1, 5),
             soreness=randint(1, 5),
             user_id=rc([user.id for user in users]),
             workout_id=rc([workout.id for workout in workouts])
-        )
-        health_stats.append(h)
-
-    return health_stats
+        ) for _ in range(20)
+    ]
 
 
 if __name__ == '__main__':
     with app.app_context():
         print("Clearing db...")
-        Workout.query.delete()
-        HealthStat.query.delete()
-        User.query.delete()
+        db.session.query(HealthStat).delete()
+        db.session.query(Workout).delete()
+        db.session.query(User).delete()
 
         print("Seeding workouts...")
         workouts = create_workouts()
