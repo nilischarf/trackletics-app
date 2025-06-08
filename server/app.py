@@ -2,7 +2,7 @@ from flask import Flask, make_response, jsonify, request, session
 from flask_restful import Resource, Api
 from config import create_app, db
 from flask_migrate import Migrate
-from models import User, Workout
+from models import User, Workout, HealthStat
 
 app = create_app()
 api = Api(app)
