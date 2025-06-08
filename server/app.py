@@ -55,6 +55,22 @@ class Workouts(Resource):
         response = make_response(workout_list, 200)
         return response
 
+    def post(self):
+        data = request.get_json()
+        try:
+            name = data.get('name')
+            category = data.get('category')
+            difficulty = data.get('difficulty')
+
+            new_workout = Workout(name=name, category=category, difficulty=difficulty)
+            db.session.add(new_workout)
+            db.session.commit()
+            response_dict = new_workout.to_dict()
+            response = make_response(response_dict, 201)
+            return response
+        except (ValueError, TypeError) as e:
+            return {"errors": ["validation errors"]}, 400
+
 api.add_resource(Workouts, '/workouts')
 
 class HealthStats(Resource):
