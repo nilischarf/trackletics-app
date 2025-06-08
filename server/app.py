@@ -1,11 +1,12 @@
 from flask import Flask, make_response, jsonify, request, session
-from flask_restful import Resource
-from config import create_app, db, api
+from flask_restful import Resource, Api
+from config import create_app, db
 from flask_migrate import Migrate
-from models import User
+from models import User, Workout
 
 app = create_app()
-migrate = Migrate(app, db)  
+api = Api(app)
+migrate = Migrate(app, db)
 
 @app.route('/') 
 def home():
@@ -51,10 +52,18 @@ api.add_resource(CheckSession, '/check_session')
 class Workouts(Resource):
     def get(self):
         workout_list = [w.to_dict() for w in Workout.query.all()]
-        response = make_response(wokrout_list, 200,)
+        response = make_response(workout_list, 200)
         return response
 
 api.add_resource(Workouts, '/workouts')
+
+class HealthStats(Resource):
+    def get(self):
+        health_stat_list = [h.to_dict() for h in HealthStat.query.all()]
+        response = make_response(health_stat_list, 200)
+        return response
+
+api.add_resource(HealthStats, '/health_stats')
 
 if __name__ == '__main__':
     app.run(port=5555, debug=True)
