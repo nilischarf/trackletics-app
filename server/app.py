@@ -78,18 +78,18 @@ class Workouts(Resource):
 
 api.add_resource(Workouts, '/workouts')
 
-class WorkoutById(Resource):
+class WorkoutByID(Resource):
     def patch(self, id):
         workout = Workout.query.filter_by(id=id).first()
         if not workout:
-            return {"error": "Camper not found"}, 404
+            return {"error": "Workout not found"}, 404
 
         data = request.get_json()
         try:
             if 'name' in data:
                 workout.name = data['name']
             if 'category' in data:
-                workout.age = data['category']
+                workout.category = data['category']
             if "difficulty" in data:
                 workout.difficulty = int(data["difficulty"])
             db.session.commit()
@@ -110,7 +110,6 @@ class WorkoutById(Resource):
 
 api.add_resource(WorkoutByID, '/workouts/<int:id>')
 
-
 class HealthStats(Resource):
     def get(self):
         health_stat_list = [h.to_dict() for h in HealthStat.query.all()]
@@ -120,23 +119,28 @@ class HealthStats(Resource):
     def post(self):
         data = request.get_json()
         try: 
+            calories_burned = int(data.get('calories_burned'))
+            hydration = int(data.get('hydration'))
+            soreness = int(data.get('soreness'))
             user_id = data.get('user_id')
-            calories_burned = data.get('calories_burned')
-            hydration = data.get('hydration')
-            soreness = data.get('soreness')
-        
-            workout = db.session.get(Workout, workout_id)
-            user = db.session.get(User, user_id)
+            workout_id = data.get('workout_id')
 
-            if not workout or not user:
-                return {"error": "Invalid workout or user ID"}, 404
+            if not (1 <= hydration <= 5) or not (1 <= soreness <= 5):
+                raise ValueError("Hydration and soreness must be 1-5.")
+            if calories_burned < 0:
+                raise ValueError("Calories burned must be greater than 0.")
+
+            user = db.session.get(User, user_id)
+            workout = db.session.get(Workout, workout_id)
+            if not user or not workout:
+                return {"error": "User or workout not found"}, 404
             
             new_stat = HealthStat(
                 calories_burned=calories_burned,
                 hydration=hydration,
                 soreness=soreness,
-                workout_id=workout_id,
-                user_id=user_id
+                user_id=user_id,
+                workout_id=workout_id
             )
             db.session.add(new_stat)
             db.session.commit()
@@ -149,6 +153,42 @@ class HealthStats(Resource):
             return {"errors": ["validation errors"]}, 400
 
 api.add_resource(HealthStats, '/health_stats')
+
+class HealthStatById(Resource):
+    def patch(self, id):
+        health_stat = HealthStat.query.filter_by(id=id).first()
+        if not health_stat:
+            return {"error": "HealthStat not found"}, 404
+
+        data = request.get_json()
+        try:
+            if 'calories_burned' in data:
+                health_stat.calories_burned = int(data["calories_burned"])
+            if "hydration" in data:
+                h = int(data["hydration"])
+                if not (1 <= h <= 5): raise ValueError
+                health_stat.hydration = h
+            if "soreness" in data:
+                s = int(data["soreness"])
+                if not (1 <= s <= 5): raise ValueError
+                health_stat.soreness = s
+            db.session.commit()
+            health_stat_dict = health_stat.to_dict(['calories_burned', 'hydration', 'soreness'])
+            response = make_response(health_stat_dict, 200)
+            return response
+        except ValueError:
+            return {"errors": ["validation errors"]}, 400
+        
+    def delete(self, id):
+        health_stat = HealthStat.query.filter_by(id=id).first()
+        if not health_stat:
+            return {"error": "HealthStat not found"}, 404
+        db.session.delete(health_stat)
+        db.session.commit()
+        response = make_response("", 204)
+        return response
+
+api.add_resource(HealthStatById, '/health_stats/<int:id>')
 
 if __name__ == '__main__':
     app.run(port=5555, debug=True)

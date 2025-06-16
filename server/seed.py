@@ -14,22 +14,48 @@ app=create_app()
 fake = Faker()
 
 def create_workouts():
-    return [Workout(name=fake.sentence(), category=fake.sentence(), difficulty=randint(1, 5)) for _ in range(10)]
+    workout_data = [
+        ("Morning Run", "Cardio", 3),
+        ("Upper Body Strength", "Strength", 4),
+        ("Yoga Flow", "Flexibility", 2),
+        ("HIIT Blast", "Cardio", 5),
+        ("Leg Day", "Strength", 4),
+        ("Core Burn", "Strength", 3),
+        ("Evening Stretch", "Flexibility", 1),
+        ("Cycling Sprint", "Cardio", 4),
+        ("Pilates Session", "Flexibility", 2),
+        ("Full Body Circuit", "Strength", 5)
+    ]
+    return [Workout(name=name, category=category, difficulty=difficulty) for name, category, difficulty in workout_data]
+
 
 def create_users():
-    return [User(username=fake.name()) for _ in range(5)]
+    usernames = set()
+    while len(usernames) < 5:
+        usernames.add(fake.user_name())
+    return [User(username=u) for u in usernames]
 
 def create_health_stats(workouts, users):
-    return [
-        HealthStat(
-            calories_burned=rc(range(500)),
-            hydration=randint(1, 5),
-            soreness=randint(1, 5),
-            user_id=rc([user.id for user in users]),
-            workout_id=rc([workout.id for workout in workouts])
-        ) for _ in range(20)
-    ]
+    health_stats = []
 
+    for _ in range(20):
+        workout = rc(workouts)
+        user = rc(users)
+
+        calories = randint(200, 800) * (workout.difficulty / 5)  # scale by difficulty
+        hydration = randint(2, 5) if workout.category == 'Cardio' else randint(1, 4)
+        soreness = randint(2, 5) if workout.difficulty >= 4 else randint(1, 3)
+
+        health_stat = HealthStat(
+            calories_burned=int(calories),
+            hydration=hydration,
+            soreness=soreness,
+            user_id=user.id,
+            workout_id=workout.id
+        )
+        health_stats.append(health_stat)
+
+    return health_stats
 
 if __name__ == '__main__':
     with app.app_context():
