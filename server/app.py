@@ -55,12 +55,17 @@ class Workouts(Resource):
         response = make_response(workout_list, 200)
         return response
 
-    def post(self):
+    def post(self):  
         data = request.get_json()
         try:
             name = data.get('name')
             category = data.get('category')
-            difficulty = data.get('difficulty')
+            difficulty = int(data.get('difficulty'))
+
+            if not name or not category:
+                raise ValueError("Name and category are required.")
+            if difficulty < 1 or difficulty > 5:
+                raise ValueError("Difficulty must be between 1 and 5.")
 
             new_workout = Workout(name=name, category=category, difficulty=difficulty)
             db.session.add(new_workout)
@@ -73,11 +78,75 @@ class Workouts(Resource):
 
 api.add_resource(Workouts, '/workouts')
 
+class WorkoutById(Resource):
+    def patch(self, id):
+        workout = Workout.query.filter_by(id=id).first()
+        if not workout:
+            return {"error": "Camper not found"}, 404
+
+        data = request.get_json()
+        try:
+            if 'name' in data:
+                workout.name = data['name']
+            if 'category' in data:
+                workout.age = data['category']
+            if "difficulty" in data:
+                workout.difficulty = int(data["difficulty"])
+            db.session.commit()
+            workout_dict = workout.to_dict(['name', 'category', 'difficulty'])
+            response = make_response(workout_dict, 200)
+            return response
+        except ValueError:
+            return {"errors": ["validation errors"]}, 400
+        
+    def delete(self, id):
+        workout = Workout.query.filter_by(id=id).first()
+        if not workout:
+            return {"error": "Workout not found"}, 404
+        db.session.delete(workout)
+        db.session.commit()
+        response = make_response("", 204)
+        return response
+
+api.add_resource(WorkoutByID, '/workouts/<int:id>')
+
+
 class HealthStats(Resource):
     def get(self):
         health_stat_list = [h.to_dict() for h in HealthStat.query.all()]
         response = make_response(health_stat_list, 200)
         return response
+
+    def post(self):
+        data = request.get_json()
+        try: 
+            user_id = data.get('user_id')
+            calories_burned = data.get('calories_burned')
+            hydration = data.get('hydration')
+            soreness = data.get('soreness')
+        
+            workout = db.session.get(Workout, workout_id)
+            user = db.session.get(User, user_id)
+
+            if not workout or not user:
+                return {"error": "Invalid workout or user ID"}, 404
+            
+            new_stat = HealthStat(
+                calories_burned=calories_burned,
+                hydration=hydration,
+                soreness=soreness,
+                workout_id=workout_id,
+                user_id=user_id
+            )
+            db.session.add(new_stat)
+            db.session.commit()
+
+            response_dict = new_stat.to_dict()
+            response = make_response(response_dict, 201)
+            return response
+
+        except (ValueError, TypeError) as e:
+            return {"errors": ["validation errors"]}, 400
 
 api.add_resource(HealthStats, '/health_stats')
 
