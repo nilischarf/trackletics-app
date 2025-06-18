@@ -12,19 +12,45 @@ migrate = Migrate(app, db)
 def home():
     return '<h1>Trackletics</h1>'
 
+class Signup(Resource):
+    def post(self):
+        data = request.get_json()
+        username = data.get('username')
+        password = data.get('password')
+
+        if not username or not password:
+            return {"error": "Username and password required."}, 400
+
+        try:
+                new_user = User(username=username)
+                new_user.password = password  # bcrypt hashes it
+                db.session.add(new_user)
+                db.session.commit()
+                session['user_id'] = new_user.id
+                response_dict = new_user.to_dict()
+                return make_response(response_dict, 201)
+        
+        except Exception as e:
+            return {"error": "Signup failed."}, 500
+
+api.add_resource(Signup, '/signup')
+        
 class Login(Resource):
     def post(self):
         data = request.get_json()
-        try: 
-            username = data.get('username')
-            new_user = User(username=username)
-            db.session.add(new_user)
-            db.session.commit()
-            session['user_id'] = new_user.id
-            response_dict = new_user.to_dict()
-            return make_response(response_dict, 201)
-        except (ValueError, TypeError) as e:
-            return {'errors': ['validation errors']}, 400
+        username = data.get('username')
+        password = data.get('password')
+
+        if not username or not password:
+            return {"error": "Username and password required."}, 400
+
+        user = User.query.filter_by(username=username).first()
+
+        if user and user.authenticate(password):
+            session['user_id'] = user.id
+            return user.to_dict(), 200
+        else:
+            return {"error": "Invalid password."}, 401
 
 api.add_resource(Login, '/login')
 
