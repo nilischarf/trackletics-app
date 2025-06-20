@@ -101,7 +101,16 @@ class Workouts(Resource):
 api.add_resource(Workouts, '/workouts')
 
 class WorkoutByID(Resource):
-    def patch(self, id):
+    def get(self, workout_id):
+        workout = db.session.get(Workout, workout_id)
+
+        if not workout:
+            return {"error": "Workout not found"}, 404
+
+        response = make_response(workout.to_dict(), 200)
+        return response
+        
+    def patch(self, workout_id):
         workout = Workout.query.filter_by(id=id).first()
         if not workout:
             return {"error": "Workout not found"}, 404
@@ -121,7 +130,7 @@ class WorkoutByID(Resource):
         except ValueError:
             return {"errors": ["validation errors"]}, 400
         
-    def delete(self, id):
+    def delete(self, workout_id):
         workout = Workout.query.filter_by(id=id).first()
         if not workout:
             return {"error": "Workout not found"}, 404
@@ -130,7 +139,7 @@ class WorkoutByID(Resource):
         response = make_response("", 204)
         return response
 
-api.add_resource(WorkoutByID, '/workouts/<int:id>')
+api.add_resource(WorkoutByID, '/workouts/<int:workout_id>')
 
 class HealthStats(Resource):
     def get(self):
@@ -166,8 +175,17 @@ class HealthStats(Resource):
 
 api.add_resource(HealthStats, '/health_stats')
 
-class HealthStatById(Resource):
-    def patch(self, id):
+class HealthStatByID(Resource):
+    def get(self, health_stat_id):
+        health_stat = db.session.get(HealthStat, health_stat_id)
+
+        if not health_stat:
+            return {"error": "Health Stat not found"}, 404
+
+        response = make_response(health_stat.to_dict(), 200)
+        return response
+
+    def patch(self, health_stat_id):
         health_stat = HealthStat.query.filter_by(id=id).first()
         if not health_stat:
             return {"error": "HealthStat not found"}, 404
@@ -191,7 +209,7 @@ class HealthStatById(Resource):
         except ValueError:
             return {"errors": ["validation errors"]}, 400
         
-    def delete(self, id):
+    def delete(self, health_stat_id):
         health_stat = HealthStat.query.filter_by(id=id).first()
         if not health_stat:
             return {"error": "HealthStat not found"}, 404
@@ -200,7 +218,7 @@ class HealthStatById(Resource):
         response = make_response("", 204)
         return response
 
-api.add_resource(HealthStatById, '/health_stats/<int:id>')
+api.add_resource(HealthStatByID, '/health_stats/<int:health_stat_id>')
 
 if __name__ == '__main__':
     app.run(port=5555, debug=True)
