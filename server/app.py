@@ -1,16 +1,14 @@
 from flask import Flask, make_response, jsonify, request, session
+from flask_cors import CORS
 from flask_restful import Resource, Api
 from config import create_app, db
 from flask_migrate import Migrate
 from models import User, Workout, HealthStat
 
 app = create_app()
+CORS(app, supports_credentials=True)
 api = Api(app)
 migrate = Migrate(app, db)
-
-@app.route('/') 
-def home():
-    return '<h1>Trackletics</h1>'
 
 class Signup(Resource):
     def post(self):
@@ -21,16 +19,19 @@ class Signup(Resource):
         if not username or not password:
             return {"error": "Username and password required."}, 400
 
+        existing_user = User.query.filter_by(username=username).first()
+        if existing_user:
+            return {"error": "Username already exists."}, 400
+
         try:
-                new_user = User(username=username)
-                new_user.password = password  # bcrypt hashes it
-                db.session.add(new_user)
-                db.session.commit()
-                session['user_id'] = new_user.id
-                response_dict = new_user.to_dict()
-                return make_response(response_dict, 201)
-        
+            new_user = User(username=username)
+            new_user.password_hash = password
+            db.session.add(new_user)
+            db.session.commit()
+            session['user_id'] = new_user.id 
+            return new_user.to_dict(), 201
         except Exception as e:
+            print("Signup Error:", e)
             return {"error": "Signup failed."}, 500
 
 api.add_resource(Signup, '/signup')
@@ -50,7 +51,7 @@ class Login(Resource):
             session['user_id'] = user.id
             return user.to_dict(), 200
         else:
-            return {"error": "Invalid password."}, 401
+            return {"error": "Invalid username or password."}, 401
 
 api.add_resource(Login, '/login')
 
@@ -84,16 +85,11 @@ class Workouts(Resource):
     def post(self):  
         data = request.get_json()
         try:
-            name = data.get('name')
-            category = data.get('category')
-            difficulty = int(data.get('difficulty'))
-
-            if not name or not category:
-                raise ValueError("Name and category are required.")
-            if difficulty < 1 or difficulty > 5:
-                raise ValueError("Difficulty must be between 1 and 5.")
-
-            new_workout = Workout(name=name, category=category, difficulty=difficulty)
+            new_workout = Workout(
+                name = data.get('name'),
+                category = data.get('category'),
+                difficulty = int(data.get('difficulty'))
+            )
             db.session.add(new_workout)
             db.session.commit()
             response_dict = new_workout.to_dict()
@@ -151,16 +147,6 @@ class HealthStats(Resource):
             user_id = data.get('user_id')
             workout_id = data.get('workout_id')
 
-            if not (1 <= hydration <= 5) or not (1 <= soreness <= 5):
-                raise ValueError("Hydration and soreness must be 1-5.")
-            if calories_burned < 0:
-                raise ValueError("Calories burned must be greater than 0.")
-
-            user = db.session.get(User, user_id)
-            workout = db.session.get(Workout, workout_id)
-            if not user or not workout:
-                return {"error": "User or workout not found"}, 404
-            
             new_stat = HealthStat(
                 calories_burned=calories_burned,
                 hydration=hydration,

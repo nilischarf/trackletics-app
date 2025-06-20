@@ -31,9 +31,17 @@ def create_workouts():
 
 def create_users():
     usernames = set()
+    users = []
+
     while len(usernames) < 5:
-        usernames.add(fake.user_name())
-    return [User(username=u) for u in usernames]
+        username = fake.user_name()
+        if username not in usernames:
+            user = User(username=username)
+            user.password_hash = "password123"  
+            users.append(user)
+            usernames.add(username)
+
+    return users
 
 def create_health_stats(workouts, users):
     health_stats = []
@@ -42,7 +50,7 @@ def create_health_stats(workouts, users):
         workout = rc(workouts)
         user = rc(users)
 
-        calories = randint(200, 800) * (workout.difficulty / 5)  # scale by difficulty
+        calories = randint(200, 800) * (workout.difficulty / 5) 
         hydration = randint(2, 5) if workout.category == 'Cardio' else randint(1, 4)
         soreness = randint(2, 5) if workout.difficulty >= 4 else randint(1, 3)
 
