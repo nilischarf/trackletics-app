@@ -12,7 +12,8 @@ class Workout(db.Model, SerializerMixin):
     difficulty = db.Column(db.Integer)
 
     health_stats = db.relationship("HealthStat", back_populates="workout", cascade="all, delete")
-    serialize_rules = ('-health_stats',)
+    users = association_proxy('health_stats', 'user')
+    serialize_rules = ('-health_stats.workout',)
 
     @validates('name', 'category')
     def validate_name_category(self, key, value):
@@ -39,7 +40,7 @@ class User(db.Model, SerializerMixin):
 
     health_stats = db.relationship("HealthStat", back_populates="user", cascade="all, delete")
     workouts = association_proxy('health_stats', 'workout')
-    serialize_rules = ('-_password_hash', '-health_stats', 'workouts')
+    serialize_rules = ('-_password_hash', '-health_stats')
 
     @hybrid_property
     def password_hash(self):
@@ -70,7 +71,7 @@ class HealthStat(db.Model, SerializerMixin):
 
     user = db.relationship("User", back_populates="health_stats")
     workout = db.relationship("Workout", back_populates="health_stats")
-    serialize_rules = ('-user', '-workout', '-user_id', '-workout_id')
+    serialize_rules = ('-user.health_stats', '-workout.health_stats')
 
     @validates('calories_burned')
     def validate_calories(self, key, value):

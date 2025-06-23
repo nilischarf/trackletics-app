@@ -72,7 +72,7 @@ class CheckSession(Resource):
         if not user:
             return {}, 401
 
-        return user.to_dict(), 200
+        return user.to_dict(rules=('workouts.health_stats',)), 200
 
 api.add_resource(CheckSession, '/check_session')
 
