@@ -72,7 +72,19 @@ class CheckSession(Resource):
         if not user:
             return {}, 401
 
-        return user.to_dict(rules=('workouts.health_stats',)), 200
+        workout_id = request.args.get('workout_id', type=int)
+        if workout_id:
+            filtered_stats = [
+                health_stat.to_dict()
+                for health_stat in user.health_stats
+                if health_stat.workout_id == workout_id
+            ]
+            return {
+                "user": user.to_dict(),
+                "health_stats": filtered_stats
+            }, 200
+
+        return user.to_dict(), 200 
 
 api.add_resource(CheckSession, '/check_session')
 
