@@ -72,19 +72,16 @@ class CheckSession(Resource):
         if not user:
             return {}, 401
 
-        workout_id = request.args.get('workout_id', type=int)
-        if workout_id:
-            filtered_stats = [
-                health_stat.to_dict()
-                for health_stat in user.health_stats
-                if health_stat.workout_id == workout_id
-            ]
-            return {
-                "user": user.to_dict(),
-                "health_stats": filtered_stats
-            }, 200
+        user_dict = user.to_dict()
+        user_dict['workouts'] = [
+            {
+                **w.to_dict(),
+                "health_stats": [hs.to_dict() for hs in w.health_stats if hs.user_id == user_id]
+            }
+            for w in Workout.query.join(HealthStat).filter(HealthStat.user_id == user_id).all()
+        ]
 
-        return user.to_dict(), 200 
+        return user_dict, 200
 
 api.add_resource(CheckSession, '/check_session')
 
@@ -198,7 +195,7 @@ class HealthStatByID(Resource):
         return response
 
     def patch(self, health_stat_id):
-        health_stat = HealthStat.query.filter_by(id=id).first()
+        health_stat = HealthStat.query.filter_by(id=health_stat_id).first()
         if not health_stat:
             return {"error": "HealthStat not found"}, 404
 
@@ -215,14 +212,14 @@ class HealthStatByID(Resource):
                 if not (1 <= s <= 5): raise ValueError
                 health_stat.soreness = s
             db.session.commit()
-            health_stat_dict = health_stat.to_dict(['calories_burned', 'hydration', 'soreness'])
+            health_stat_dict = health_stat.to_dict()
             response = make_response(health_stat_dict, 200)
             return response
         except ValueError:
             return {"errors": ["validation errors"]}, 400
         
     def delete(self, health_stat_id):
-        health_stat = HealthStat.query.filter_by(id=id).first()
+        health_stat = HealthStat.query.filter_by(id=health_stat_id).first()
         if not health_stat:
             return {"error": "HealthStat not found"}, 404
         db.session.delete(health_stat)
