@@ -1,32 +1,77 @@
-import React, { useEffect, useState } from "react";
-import { BrowserRouter as Router, Route, Switch, Redirect } from "react-router-dom";
-import NavBar from "./NavBar";
-import Login from "./Login";
+import React, { useState, useEffect } from "react";
+import { BrowserRouter as Router, Route, Redirect, Switch } from "react-router-dom";
+import LoginForm from "./LoginForm";
+import SignupForm from "./SignupForm";
 import Home from "./Home";
-import WorkoutsPage from "./WorkoutsPage";
-import HealthStatsPage from "./HealthStatsPage";
+import Dashboard from "./Dashboard";
+import NavBar from "./NavBar";
 
 function App() {
   const [user, setUser] = useState(null);
+  const [workouts, setWorkouts] = useState([]);
+  const [showNewWorkoutForm, setShowNewWorkoutForm] = useState(false);
 
   useEffect(() => {
-    fetch("/check_session").then((r) => {
-      if (r.ok) {
-        r.json().then((user) => setUser(user));
-      }
-    });
+    fetch("http://localhost:5555/check_session", {
+      method: "GET",
+      credentials: "include",
+    })
+      .then((response) => {
+        if (response.ok) return response.json();
+        throw new Error("Not logged in");
+      })
+      .then(setUser)
+      .catch(() => setUser(null));
   }, []);
 
-  if (!user) return <Login onLogin={setUser} />;
+  useEffect(() => {
+    fetch("http://localhost:5555/workouts")
+      .then((r) => r.json())
+      .then(setWorkouts);
+  }, []);
+
+  function handleLogout() {
+    fetch("http://localhost:5555/logout", {
+      method: "DELETE",
+      credentials: "include",
+    }).then(() => setUser(null));
+  }
 
   return (
     <Router>
-      <NavBar onLogout={() => setUser(null)} />
+      <NavBar user={user} onLogout={handleLogout} />
       <Switch>
-        <Route exact path="/" render={() => <Home user={user} />} />
-        <Route path="/workouts" component={WorkoutsPage} />
-        <Route path="/health_stats" render={() => <HealthStatsPage user={user} />} />
-        <Redirect to="/" />
+        <Route exact path="/" component={Home} />
+        <Route
+          path="/login"
+          render={() =>
+            user ? <Redirect to="/dashboard" /> : <LoginForm onLogin={setUser} />
+          }
+        />
+        <Route
+          path="/signup"
+          render={() =>
+            user ? <Redirect to="/dashboard" /> : <SignupForm onSignup={setUser} />
+          }
+        />
+        <Route
+          path="/dashboard"
+          render={() =>
+            user ? (
+              <Dashboard
+                user={user}
+                setUser={setUser}
+                workouts={workouts}
+                setWorkouts={setWorkouts}
+                showNewWorkoutForm={showNewWorkoutForm}
+                setShowNewWorkoutForm={setShowNewWorkoutForm}
+              />
+            ) : (
+              <Redirect to="/login" />
+            )
+          }
+        />
+        <Route render={() => <h2>404: Page not found</h2>} />
       </Switch>
     </Router>
   );

@@ -1,7 +1,53 @@
-:root {
-  --bg: #282c34;
-  --header: #fff;
-  --link: #61dafb;
-  --text: hsla(0, 0%, 100%, 0.88);
+
+.workout-card {
+  border: 1px solid #ccc;
+  padding: 16px;
+  margin-bottom: 20px;
 }
 
+.health-stat-card {
+  margin-left: 16px;
+  padding: 10px;
+  border: 1px solid #eee;
+  margin-bottom: 10px;
+  background-color: #f9f9f9;
+}
+
+.health-stat-details {
+  margin-bottom: 6px;
+}
+
+.button {
+  margin-right: 8px;
+  padding: 6px 12px;
+  border: none;
+  cursor: pointer;
+}
+
+.button.edit {
+  background-color: #4caf50;
+  color: white;
+}
+
+.button.delete {
+  background-color: #f44336;
+  color: white;
+}
+
+h4 {
+  margin-bottom: 12px;
+}
+
+nav a, nav button {
+  margin-right: 20px; 
+  text-decoration: none;
+  color: inherit; 
+}
+
+nav button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font: inherit;
+  padding: 0;
+}

@@ -1,99 +1,55 @@
-import React from "react";
-import { Formik, Form, Field, ErrorMessage } from "formik";
+import React, { useState } from "react";
 
-const validate = (values) => {
-  const errors = {};
-  if (!values.calories_burned) {
-    errors.calories_burned = "Required";
-  } else if (isNaN(values.calories_burned) || values.calories_burned < 0) {
-    errors.calories_burned = "Must be a positive number";
-  }
+function EditHealthStatForm({ stat, onUpdateStat }) {
+  const [calories, setCalories] = useState(stat.calories_burned);
+  const [hydration, setHydration] = useState(stat.hydration);
+  const [soreness, setSoreness] = useState(stat.soreness);
 
-  if (!values.hydration) {
-    errors.hydration = "Required";
-  } else if (values.hydration < 1 || values.hydration > 5) {
-    errors.hydration = "Must be between 1 and 5";
-  }
+  function handleSubmit(e) {
+  e.preventDefault();
+  fetch(`http://localhost:5555/health_stats/${stat.id}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      calories_burned: calories,
+      hydration,
+      soreness,
+    }),
+  })
+    .then((response) => {
+      if (!response.ok) throw new Error("Failed to update");
+      return response.json();
+    })
+    .then((updatedStat) => onUpdateStat(updatedStat))
+    .catch((error) => alert(error.message));
+}
 
-  if (!values.soreness) {
-    errors.soreness = "Required";
-  } else if (values.soreness < 1 || values.soreness > 5) {
-    errors.soreness = "Must be between 1 and 5";
-  }
-
-  return errors;
-};
-
-function EditHealthStatForm({ healthStat, onSubmit, onCancel }) {
   return (
-    <Formik
-      initialValues={{
-        calories_burned: healthStat.calories_burned || "",
-        hydration: healthStat.hydration || "",
-        soreness: healthStat.soreness || "",
-      }}
-      validate={validate}
-      onSubmit={(values, { setSubmitting }) => {
-        onSubmit(values);
-        setSubmitting(false);
-      }}
-    >
-      {({ isSubmitting }) => (
-        <Form className="edit-health-stat-form">
-          <div>
-            <label htmlFor="calories_burned">Calories Burned</label>
-            <Field
-              type="number"
-              name="calories_burned"
-              id="calories_burned"
-              min="0"
-            />
-            <ErrorMessage
-              name="calories_burned"
-              component="div"
-              className="error"
-            />
-          </div>
-
-          <div>
-            <label htmlFor="hydration">Hydration (1-5)</label>
-            <Field
-              as="select"
-              name="hydration"
-              id="hydration"
-            >
-              <option value="">Select hydration</option>
-              {[1, 2, 3, 4, 5].map((num) => (
-                <option key={num} value={num}>{num}</option>
-              ))}
-            </Field>
-            <ErrorMessage name="hydration" component="div" className="error" />
-          </div>
-
-          <div>
-            <label htmlFor="soreness">Soreness (1-5)</label>
-            <Field
-              as="select"
-              name="soreness"
-              id="soreness"
-            >
-              <option value="">Select soreness</option>
-              {[1, 2, 3, 4, 5].map((num) => (
-                <option key={num} value={num}>{num}</option>
-              ))}
-            </Field>
-            <ErrorMessage name="soreness" component="div" className="error" />
-          </div>
-
-          <button type="submit" disabled={isSubmitting}>
-            Save
-          </button>
-          <button type="button" onClick={onCancel} disabled={isSubmitting}>
-            Cancel
-          </button>
-        </Form>
-      )}
-    </Formik>
+    <form onSubmit={handleSubmit}>
+      <input
+        placeholder="Calories Burned"
+        type="number"
+        value={calories}
+        onChange={(e) => setCalories(e.target.value)}
+      />
+      <input
+        placeholder="Hydration (1-5)"
+        type="number"
+        value={hydration}
+        min="1"
+        max="5"
+        onChange={(e) => setHydration(parseInt(e.target.value))}
+      />
+      <input
+        placeholder="Soreness (1-5)"
+        type="number"
+        value={soreness}
+        min="1"
+        max="5"
+        onChange={(e) => setSoreness(parseInt(e.target.value))}
+      />
+      <button type="submit">Save</button>
+    </form>
   );
 }
 

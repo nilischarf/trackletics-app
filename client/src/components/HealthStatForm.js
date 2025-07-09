@@ -1,62 +1,56 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 
-function HealthStatForm({ user, onAdd }) {
-  const [formData, setFormData] = useState({
-    calories_burned: "",
-    hydration: "",
-    soreness: "",
-    workout_id: ""
-  });
-  const [workouts, setWorkouts] = useState([]);
-
-  useEffect(() => {
-    fetch("/workouts")
-      .then((r) => r.json())
-      .then(setWorkouts);
-  }, []);
-
-  function handleChange(e) {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  }
+function HealthStatForm({ workoutId, userId, onAddStat }) {
+  const [calories, setCalories] = useState("");
+  const [hydration, setHydration] = useState(1);
+  const [soreness, setSoreness] = useState(1);
 
   function handleSubmit(e) {
     e.preventDefault();
-    const dataToSend = {
-      ...formData,
-      user_id: user.id,
-      calories_burned: parseInt(formData.calories_burned),
-      hydration: parseInt(formData.hydration),
-      soreness: parseInt(formData.soreness)
-    };
-    fetch("/health_stats", {
+    fetch("http://localhost:5555/health_stats", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(dataToSend)
+      body: JSON.stringify({
+        calories_burned: calories,
+        hydration,
+        soreness,
+        workout_id: workoutId,
+        user_id: userId,
+      }),
     })
-      .then((r) => r.json())
-      .then(onAdd);
-    setFormData({
-      calories_burned: "",
-      hydration: "",
-      soreness: "",
-      workout_id: ""
-    });
+      .then((response) => response.json())
+      .then(onAddStat);
+
+    setCalories("");
+    setHydration(1);
+    setSoreness(1);
   }
 
   return (
     <form onSubmit={handleSubmit}>
-      <input name="calories_burned" value={formData.calories_burned} onChange={handleChange} placeholder="Calories Burned" />
-      <input name="hydration" value={formData.hydration} onChange={handleChange} placeholder="Hydration (1-5)" />
-      <input name="soreness" value={formData.soreness} onChange={handleChange} placeholder="Soreness (1-5)" />
-      <select name="workout_id" value={formData.workout_id} onChange={handleChange}>
-        <option value="">Select Workout</option>
-        {workouts.map((w) => (
-          <option key={w.id} value={w.id}>
-            {w.name}
-          </option>
-        ))}
-      </select>
-      <button type="submit">Add Health Stat</button>
+      <input
+        placeholder="Calories Burned"
+        type="number"
+        value={calories}
+        onChange={(e) => setCalories(e.target.value)}
+      />
+      <input
+        placeholder="Hydration (1-5)"
+        type="number"
+        min="1"
+        max="5"
+        value={hydration}
+        onChange={(e) => setHydration(parseInt(e.target.value))}
+      />
+      <input
+        placeholder="Soreness (1-5)"
+        type="number"
+        min="1"
+        max="5"
+        value={soreness}
+        onChange={(e) => setSoreness(parseInt(e.target.value))}
+      />
+      <button type="submit">Add Stat</button>
     </form>
   );
 }

@@ -1,17 +1,21 @@
 import React from "react";
-import { NavLink } from "react-router-dom";
+import { Link } from "react-router-dom";
 
-function NavBar({ onLogout }) {
-  function handleLogout() {
-    fetch("/logout", { method: "DELETE" }).then(() => onLogout());
-  }
-
+function NavBar({ user, onLogout }) {
   return (
     <nav>
-      <NavLink to="/">Home</NavLink>
-      <NavLink to="/workouts">Workouts</NavLink>
-      <NavLink to="/health_stats">Health Stats</NavLink>
-      <button onClick={handleLogout}>Logout</button>
+      <Link to="/"> Home </Link>
+      {user ? (
+        <>
+          <Link to="/dashboard"> Dashboard </Link>
+          <button onClick={onLogout}> Logout </button>
+        </>
+      ) : (
+        <>
+          <Link to="/login" > Login </Link>
+          <Link to="/signup"> Sign Up </Link>
+        </>
+      )}
     </nav>
   );
 }
