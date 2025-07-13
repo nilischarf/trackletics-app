@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { Formik } from "formik";
 
 function SignupForm({ onSignup }) {
   const [username, setUsername] = useState("");
@@ -20,21 +21,36 @@ function SignupForm({ onSignup }) {
   }
 
   return (
-    <form onSubmit={handleSubmit}>
-      <h2>Sign Up</h2>
-      <input 
-        value={username} 
-        onChange={(e) => setUsername(e.target.value)} 
-        placeholder="Username"
-      />
-      <input 
-        value={password} 
-        onChange={(e) => setPassword(e.target.value)} 
-        type="password" 
-        placeholder="Password" 
-      />
-      <button type="submit">Sign Up</button>
-    </form>
+    <Formik
+      initialValues={{ username: "", password: "" }}
+      validate={(values) => {
+        const errors = {};
+        if (!values.username.trim()) {
+          errors.username = "Username is required";
+        }
+        if (!values.password) {
+          errors.password = "Password is required";
+        } 
+        return errors;
+      }}
+      onSubmit={handleSubmit}
+    >
+      <form onSubmit={handleSubmit}>
+        <h2>Sign Up</h2>
+        <input 
+          value={username} 
+          onChange={(e) => setUsername(e.target.value)} 
+          placeholder="Username"
+        />
+        <input 
+          value={password} 
+          onChange={(e) => setPassword(e.target.value)} 
+          type="password" 
+          placeholder="Password" 
+        />
+        <button type="submit">Sign Up</button>
+      </form>
+      </Formik>
   );
 }
 
