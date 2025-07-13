@@ -21,21 +21,36 @@ function LoginForm({ onLogin }) {
   }
 
   return (
-    <form onSubmit={handleSubmit}>
-      <h2>Log In</h2>
-      <input 
-        value={username} 
-        onChange={(e) => setUsername(e.target.value)} 
-        placeholder="Username" 
-      />
-      <input 
-        value={password} 
-        onChange={(e) => setPassword(e.target.value)} 
-        type="password" 
-        placeholder="Password" 
-      />
-      <button type="submit">Log In</button>
-    </form>
+    <Formik
+      initialValues={{ username: "", password: "" }}
+      validate={(values) => {
+        const errors = {};
+        if (!values.username) {
+          errors.username = "Username is required";
+        }
+        if (!values.password) {
+          errors.password = "Password is required";
+        }
+        return errors;
+      }}
+      onSubmit={handleSubmit}
+    >
+      <form onSubmit={handleSubmit}>
+        <h2>Log In</h2>
+        <input 
+          value={username} 
+          onChange={(e) => setUsername(e.target.value)} 
+          placeholder="Username" 
+        />
+        <input 
+          value={password} 
+          onChange={(e) => setPassword(e.target.value)} 
+          type="password" 
+          placeholder="Password" 
+        />
+        <button type="submit">Log In</button>
+      </form>
+    </Formik>
   );
 }
 

@@ -7,8 +7,6 @@ import "../index.css";
 function Dashboard({
   user,
   setUser,
-  workouts,
-  setWorkouts,
   showNewWorkoutForm,
   setShowNewWorkoutForm,
 }) {
@@ -26,7 +24,10 @@ function Dashboard({
         );
       } else {
         const newWorkout = {
-          ...newStat.workout,
+          id: newStat.workout_id,
+          name: newStat.workout?.name || "New Workout",
+          category: newStat.workout?.category || "",
+          difficulty: newStat.workout?.difficulty || "",
           health_stats: [newStat],
         };
         updatedWorkouts = [...workouts, newWorkout];
@@ -55,7 +56,6 @@ function Dashboard({
                   }
                 : w
             )
-            .filter((w) => w.health_stats.length > 0);
           return { ...prevUser, workouts: updatedWorkouts };
         });
       })
@@ -88,35 +88,35 @@ function Dashboard({
       <WorkoutSelector
         userId={user.id}
         onAddStat={handleAddStat}
-        workouts={workouts}
-        setWorkouts={setWorkouts}
+        workouts={user.workouts || []}
+        setUser={setUser}
         showNewWorkoutForm={showNewWorkoutForm}
         setShowNewWorkoutForm={setShowNewWorkoutForm}
       />
 
       <h3>Your Workouts</h3>
-      {user.workouts.map((workout) => (
+      {(user.workouts || []).map((workout) => (
         <div key={workout.id} className="workout-card">
-          <h4>
-            {workout.name} ({workout.category}) - Difficulty: {workout.difficulty}
-          </h4>
+        <h4>
+          {workout.name} ({workout.category}) - Difficulty: {workout.difficulty}
+        </h4>
 
-          <HealthStatForm
-            workoutId={workout.id}
-            userId={user.id}
-            onAddStat={handleAddStat}
-          />
+        <HealthStatForm
+          workoutId={workout.id}
+          userId={user.id}
+          onAddStat={handleAddStat}
+        />
 
-          {workout.health_stats
-            .filter((stat) => stat.user_id === user.id)
-            .map((stat) => (
-              <HealthStatCard
-                key={stat.id}
-                stat={stat}
-                onUpdateStat={handleUpdateStat}
-                onDeleteStat={handleDeleteStat}
-              />
-            ))}
+        {(workout.health_stats || [])
+          .filter((stat) => stat.user_id === user.id)
+          .map((stat) => (
+            <HealthStatCard
+              key={stat.id}
+              stat={stat}
+              onUpdateStat={handleUpdateStat}
+              onDeleteStat={handleDeleteStat}
+            />
+          ))}
         </div>
       ))}
     </div>

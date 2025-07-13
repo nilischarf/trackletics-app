@@ -79,7 +79,7 @@ function HealthStatForm({ workoutId, userId, onAddStat }) {
         />
         <button type="submit">Add Stat</button>
       </form>
-      </Formik>
+    </Formik>
   );
 }
 
