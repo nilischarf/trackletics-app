@@ -58,7 +58,7 @@ class Login(Resource):
                 }
                 for w in Workout.query.all() 
             ]
-            
+
             return user_dict, 200
         else:
             return {"error": "Invalid username or password."}, 401
@@ -238,6 +238,20 @@ class HealthStatByID(Resource):
         return response
 
 api.add_resource(HealthStatByID, '/health_stats/<int:health_stat_id>')
-x
+
+class WorkoutFilter(Resource):
+    def get(self):
+        difficulty = request.args.get('difficulty').strip()
+
+        query = Workout.query
+
+        if difficulty:
+            query = query.filter(Workout.difficulty == difficulty)
+        
+        workouts = query.all()
+        return [w.to_dict() for w in workouts], 200
+    
+api.add_resource(WorkoutFilter, '/workouts/filter')
+
 if __name__ == '__main__':
     app.run(port=5555, debug=True)
