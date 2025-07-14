@@ -215,11 +215,9 @@ class HealthStatByID(Resource):
                 health_stat.calories_burned = int(data["calories_burned"])
             if "hydration" in data:
                 h = int(data["hydration"])
-                if not (1 <= h <= 5): raise ValueError
                 health_stat.hydration = h
             if "soreness" in data:
                 s = int(data["soreness"])
-                if not (1 <= s <= 5): raise ValueError
                 health_stat.soreness = s
             db.session.commit()
             health_stat_dict = health_stat.to_dict()
@@ -238,20 +236,6 @@ class HealthStatByID(Resource):
         return response
 
 api.add_resource(HealthStatByID, '/health_stats/<int:health_stat_id>')
-
-class WorkoutFilter(Resource):
-    def get(self):
-        difficulty = request.args.get('difficulty').strip()
-
-        query = Workout.query
-
-        if difficulty:
-            query = query.filter(Workout.difficulty == difficulty)
-        
-        workouts = query.all()
-        return [w.to_dict() for w in workouts], 200
-    
-api.add_resource(WorkoutFilter, '/workouts/filter')
 
 if __name__ == '__main__':
     app.run(port=5555, debug=True)

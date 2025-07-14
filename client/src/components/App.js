@@ -26,7 +26,7 @@ function App() {
 
   useEffect(() => {
     fetch("http://localhost:5555/workouts")
-      .then((r) => r.json())
+      .then((response) => response.json())
       .then(setWorkouts);
   }, []);
 
@@ -45,13 +45,21 @@ function App() {
         <Route
           path="/login"
           render={() =>
-            user ? <Redirect to="/dashboard" /> : <LoginForm onLogin={setUser} />
+            user ? (
+              <Redirect to="/dashboard" />
+            ) : (
+              <LoginForm onLogin={setUser} setWorkouts={setWorkouts} />
+            )
           }
-        />
+        />        
         <Route
           path="/signup"
           render={() =>
-            user ? <Redirect to="/dashboard" /> : <SignupForm onSignup={setUser} />
+            user ? (
+              <Redirect to="/dashboard" />
+            ) : (
+              <SignupForm onSignup={setUser} setWorkouts={setWorkouts} />
+            )
           }
         />
         <Route

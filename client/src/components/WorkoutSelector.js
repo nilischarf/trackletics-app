@@ -1,8 +1,10 @@
 import React, { useState } from "react";
+import { Formik } from "formik";
 
 function WorkoutSelector({
   userId,
   onAddStat,
+  setUser,
   workouts,
   setWorkouts,
   showNewWorkoutForm,
@@ -35,19 +37,45 @@ function WorkoutSelector({
 
   const handleNewWorkoutSubmit = async (e) => {
     e.preventDefault();
-    const res = await fetch("http://localhost:5555/workouts", {
+  
+    const isDuplicate = workouts.some((w) => {
+      const wDifficulty = w.difficulty ? String(w.difficulty) : "";
+      return (
+        w.name.trim().toLowerCase() === newWorkout.name.trim().toLowerCase() &&
+        wDifficulty.trim().toLowerCase() === newWorkout.difficulty.trim().toLowerCase() &&
+        w.category.trim().toLowerCase() === newWorkout.category.trim().toLowerCase()
+      );
+    });
+  
+    if (isDuplicate) {
+      alert("You already have this workout!");
+      return;
+    }
+  
+    const response = await fetch("http://localhost:5555/workouts", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(newWorkout),
+      body: JSON.stringify({
+        ...newWorkout,
+        difficulty: parseInt(newWorkout.difficulty),
+      }),
     });
-    const createdWorkout = await res.json();
-
-    setWorkouts((prev) => [...prev, createdWorkout]);
+  
+    const createdWorkout = await response.json();
+  
+    setWorkouts((prev) => [...prev, { ...createdWorkout, health_stats: [] }]);
+  
+    setUser((prevUser) => ({
+      ...prevUser,
+      workouts: [...(prevUser.workouts || []), { ...createdWorkout, health_stats: [] }],
+    }));
+  
     setShowNewWorkoutForm(false);
     setNewWorkout({ name: "", category: "", difficulty: "" });
     setStatData((prev) => ({ ...prev, workout_id: createdWorkout.id }));
   };
-
+  
+  
   const handleStatSubmit = async (e) => {
     e.preventDefault();
     const res = await fetch("http://localhost:5555/health_stats", {
@@ -82,6 +110,17 @@ function WorkoutSelector({
       </label>
 
       {showNewWorkoutForm ? (
+        <Formik
+          initialValues={newWorkout}
+          validate={(values) => {
+            const errors = {};
+            if (!values.name.trim()) errors.name = "Workout name is required";
+            if (!values.category.trim()) errors.category = "Category is required";
+            if (!values.difficulty.trim()) errors.difficulty = "Difficulty is required";
+            return errors;
+        }}
+        onSubmit={handleNewWorkoutSubmit}
+      > 
         <form onSubmit={handleNewWorkoutSubmit}>
           <input
             type="text"
@@ -109,7 +148,22 @@ function WorkoutSelector({
           />
           <button type="submit">Save Workout</button>
         </form>
+      </Formik>
       ) : (
+        <Formik
+          initialValues={statData}
+          validate={(values) => {
+            const errors = {};
+            if (!values.workout_id) errors.workout_id = "Workout is required";
+            if (!values.calories_burned) errors.calories_burned = "Calories burned is required";
+            if (values.hydration < 1 || values.hydration > 5)
+              errors.hydration = "Hydration must be between 1 and 5";
+            if (values.soreness < 1 || values.soreness > 5)
+              errors.soreness = "Soreness must be between 1 and 5";
+            return errors;
+        }}
+        onSubmit={handleStatSubmit}
+      >
         <form onSubmit={handleStatSubmit}>
           <select
             name="workout_id"
@@ -155,6 +209,7 @@ function WorkoutSelector({
           />
           <button type="submit">Add to My Workouts</button>
         </form>
+        </Formik>
       )}
     </div>
   );

@@ -45,19 +45,7 @@ function EditHealthStatForm({ stat, onUpdateStat }) {
         }
         return errors;
       }}
-      onSubmit={(values) => {
-        fetch(`http://localhost:5555/health_stats/${stat.id}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(values),
-        })
-          .then((response) => {
-            if (!response.ok) throw new Error("Failed to update");
-            return response.json();
-          })
-          .then((updatedStat) => onUpdateStat(updatedStat))
-          .catch((error) => alert(error.message));
-      }}
+      onSubmit={handleSubmit}
     >
       <form onSubmit={handleSubmit}>
         <input

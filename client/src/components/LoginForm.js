@@ -15,25 +15,25 @@ function LoginForm({ onLogin }) {
     })
       .then((response) => response.ok ? response.json() : Promise.reject("Login failed"))
       .then((user) => {
-        onLogin(user);
+        onLogin(user)
       })
       .catch((error) => alert(error));
   }
 
   return (
     <Formik
-      initialValues={{ username: "", password: "" }}
-      validate={(values) => {
-        const errors = {};
-        if (!values.username) {
-          errors.username = "Username is required";
-        }
-        if (!values.password) {
-          errors.password = "Password is required";
-        }
-        return errors;
-      }}
-      onSubmit={handleSubmit}
+          initialValues={{ username: "", password: "" }}
+          validate={(values) => {
+            const errors = {};
+            if (!values.username.trim()) {
+              errors.username = "Username is required";
+            }
+            if (!values.password) {
+              errors.password = "Password is required";
+            } 
+            return errors;
+          }}
+          onSubmit={handleSubmit}
     >
       <form onSubmit={handleSubmit}>
         <h2>Log In</h2>
