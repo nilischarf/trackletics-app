@@ -49,7 +49,17 @@ class Login(Resource):
 
         if user and user.authenticate(password):
             session['user_id'] = user.id
-            return user.to_dict(), 200
+            
+            user_dict = user.to_dict()
+            user_dict['workouts'] = [
+                {
+                    **w.to_dict(),
+                    "health_stats": [hs.to_dict() for hs in w.health_stats if hs.user_id == user.id]
+                }
+                for w in Workout.query.all() 
+            ]
+            
+            return user_dict, 200
         else:
             return {"error": "Invalid username or password."}, 401
 
@@ -78,7 +88,7 @@ class CheckSession(Resource):
                 **w.to_dict(),
                 "health_stats": [hs.to_dict() for hs in w.health_stats if hs.user_id == user_id]
             }
-            for w in Workout.query.join(HealthStat).filter(HealthStat.user_id == user_id).all()
+            for w in Workout.query.all()
         ]
 
         return user_dict, 200
@@ -228,6 +238,6 @@ class HealthStatByID(Resource):
         return response
 
 api.add_resource(HealthStatByID, '/health_stats/<int:health_stat_id>')
-
+x
 if __name__ == '__main__':
     app.run(port=5555, debug=True)
