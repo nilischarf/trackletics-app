@@ -33,8 +33,6 @@ class Signup(Resource):
         except Exception as e:
             print("Signup Error:", e)
             return {"error": "Signup failed."}, 500
-
-api.add_resource(Signup, '/signup')
         
 class Login(Resource):
     def post(self):
@@ -63,14 +61,10 @@ class Login(Resource):
         else:
             return {"error": "Invalid username or password."}, 401
 
-api.add_resource(Login, '/login')
-
 class Logout(Resource):
     def delete(self):
         session['user_id'] = None
         return {}, 204
-
-api.add_resource(Logout, '/logout')
 
 class CheckSession(Resource):
     def get(self):
@@ -82,18 +76,24 @@ class CheckSession(Resource):
         if not user:
             return {}, 401
 
-        user_dict = user.to_dict()
-        user_dict['workouts'] = [
-            {
-                **w.to_dict(),
-                "health_stats": [hs.to_dict() for hs in w.health_stats if hs.user_id == user_id]
-            }
-            for w in Workout.query.all()
-        ]
+        user_stats = HealthStat.query.filter_by(user_id=user.id).all()
 
-        return user_dict, 200
+        workout_dict = {}
+        for stat in user_stats:
+            w_id = stat.workout_id
+            if w_id not in workout_dict:
+                workout_dict[w_id] = {
+                    **stat.workout.to_dict(),
+                    "health_stats": []
+                }
+            workout_dict[w_id]["health_stats"].append(stat.to_dict())
 
-api.add_resource(CheckSession, '/check_session')
+        user_data = user.to_dict()
+        user_data["workouts"] = list(workout_dict.values())
+
+        all_workouts = [w.to_dict() for w in Workout.query.all()]
+
+        return {"user": user_data, "all_workouts": all_workouts}, 200
 
 class Workouts(Resource):
     def get(self):
@@ -116,8 +116,6 @@ class Workouts(Resource):
             return response
         except (ValueError, TypeError) as e:
             return {"errors": ["validation errors"]}, 400
-
-api.add_resource(Workouts, '/workouts')
 
 class WorkoutByID(Resource):
     def get(self, workout_id):
@@ -158,8 +156,6 @@ class WorkoutByID(Resource):
         response = make_response("", 204)
         return response
 
-api.add_resource(WorkoutByID, '/workouts/<int:workout_id>')
-
 class HealthStats(Resource):
     def get(self):
         health_stat_list = [h.to_dict() for h in HealthStat.query.all()]
@@ -191,8 +187,6 @@ class HealthStats(Resource):
 
         except (ValueError, TypeError) as e:
             return {"errors": ["validation errors"]}, 400
-
-api.add_resource(HealthStats, '/health_stats')
 
 class HealthStatByID(Resource):
     def get(self, health_stat_id):
@@ -230,11 +224,27 @@ class HealthStatByID(Resource):
         health_stat = HealthStat.query.filter_by(id=health_stat_id).first()
         if not health_stat:
             return {"error": "HealthStat not found"}, 404
+
+        workout = Workout.query.filter_by(id=health_stat.workout_id).first()
+
         db.session.delete(health_stat)
         db.session.commit()
-        response = make_response("", 204)
-        return response
 
+        remaining_stats = HealthStat.query.filter_by(workout_id=workout.id).count()
+
+        if remaining_stats == 0 and workout is not None:
+            db.session.delete(workout)
+            db.session.commit()
+
+        return make_response("", 204)
+
+api.add_resource(Signup, '/signup')
+api.add_resource(Login, '/login')
+api.add_resource(Logout, '/logout')
+api.add_resource(CheckSession, '/check_session')
+api.add_resource(Workouts, '/workouts')
+api.add_resource(WorkoutByID, '/workouts/<int:workout_id>')
+api.add_resource(HealthStats, '/health_stats')
 api.add_resource(HealthStatByID, '/health_stats/<int:health_stat_id>')
 
 if __name__ == '__main__':
