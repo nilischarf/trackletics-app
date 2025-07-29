@@ -72,7 +72,7 @@ class HealthStat(db.Model, SerializerMixin):
 
     user = db.relationship("User", back_populates="health_stats")
     workout = db.relationship("Workout", back_populates="health_stats")
-    serialize_rules = ('-user.health_stats', '-workout.health_stats')
+    serialize_rules = ('-user', '-workout.health_stats')
 
     @validates('calories_burned')
     def validate_calories(self, key, value):

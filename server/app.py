@@ -47,19 +47,21 @@ class Login(Resource):
 
         if user and user.authenticate(password):
             session['user_id'] = user.id
-            
-            user_dict = user.to_dict()
-            user_dict['workouts'] = [
-                {
-                    **w.to_dict(),
-                    "health_stats": [hs.to_dict() for hs in w.health_stats if hs.user_id == user.id]
-                }
-                for w in Workout.query.all() 
-            ]
 
-            return user_dict, 200
-        else:
-            return {"error": "Invalid username or password."}, 401
+            workout_dict = {}
+            for stat in user.health_stats:
+                w_id = stat.workout_id
+                if w_id not in workout_dict:
+                    workout_dict[w_id] = {
+                        **stat.workout.to_dict(),
+                        "health_stats": []
+                    }
+                workout_dict[w_id]["health_stats"].append(stat.to_dict())
+
+            user_data = user.to_dict()
+            user_data["workouts"] = list(workout_dict.values())
+
+            return user_data, 200
 
 class Logout(Resource):
     def delete(self):
@@ -74,7 +76,7 @@ class CheckSession(Resource):
 
         user = db.session.get(User, user_id)
         if not user:
-            return {}, 401
+            return {"error": "User not found."}, 401
 
         user_stats = HealthStat.query.filter_by(user_id=user.id).all()
 
@@ -91,9 +93,7 @@ class CheckSession(Resource):
         user_data = user.to_dict()
         user_data["workouts"] = list(workout_dict.values())
 
-        all_workouts = [w.to_dict() for w in Workout.query.all()]
-
-        return {"user": user_data, "all_workouts": all_workouts}, 200
+        return user_data, 200 
 
 class Workouts(Resource):
     def get(self):

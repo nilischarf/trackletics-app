@@ -4,9 +4,8 @@ import { Formik } from "formik";
 function WorkoutSelector({
   userId,
   onAddStat,
-  setUser,
-  workouts,
-  setWorkouts,
+  allWorkouts,
+  setAllWorkouts,
   showNewWorkoutForm,
   setShowNewWorkoutForm,
 }) {
@@ -38,7 +37,7 @@ function WorkoutSelector({
   const handleNewWorkoutSubmit = async (e) => {
     e.preventDefault();
   
-    const isDuplicate = workouts.some((w) => {
+    const isDuplicate = allWorkouts.some((w) => {
       const wDifficulty = w.difficulty ? String(w.difficulty) : "";
       return (
         w.name.trim().toLowerCase() === newWorkout.name.trim().toLowerCase() &&
@@ -63,13 +62,7 @@ function WorkoutSelector({
   
     const createdWorkout = await response.json();
   
-    setWorkouts((prev) => [...prev, { ...createdWorkout, health_stats: [] }]);
-  
-    setUser((prevUser) => ({
-      ...prevUser,
-      workouts: [...(prevUser.workouts || []), { ...createdWorkout, health_stats: [] }],
-    }));
-  
+    setAllWorkouts((prev) => [...prev, createdWorkout]);
     setShowNewWorkoutForm(false);
     setNewWorkout({ name: "", category: "", difficulty: "" });
     setStatData((prev) => ({ ...prev, workout_id: createdWorkout.id }));
@@ -172,7 +165,7 @@ function WorkoutSelector({
             required
           >
             <option value="">-- Select a Workout --</option>
-            {workouts.map((w) => (
+            {allWorkouts.map((w) => (
               <option key={w.id} value={w.id}>
                 {w.name} ({w.category})
               </option>

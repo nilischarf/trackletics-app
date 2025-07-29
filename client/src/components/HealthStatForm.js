@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { Formik } from "formik";
 
+//  CHANGE FUNCTIONS TO ARROW FUNCTIONS
+
 function HealthStatForm({ workoutId, userId, onAddStat }) {
   const [calories, setCalories] = useState("");
   const [hydration, setHydration] = useState(1);

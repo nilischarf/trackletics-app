@@ -1,9 +1,14 @@
 import React, { useState } from "react";
 import { Formik } from "formik";
+import { Navigate } from "react-router-dom";
 
-function SignupForm({ onSignup }) {
+function SignupForm({ onSignup, user }) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+
+  if (user) {
+    return <Navigate to="/dashboard" />;
+  }
 
   function handleSubmit(e) {
     e.preventDefault();

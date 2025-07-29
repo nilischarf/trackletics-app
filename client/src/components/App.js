@@ -1,33 +1,37 @@
 import React, { useState, useEffect } from "react";
-import { BrowserRouter as Router, Route, Redirect, Switch } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import LoginForm from "./LoginForm";
 import SignupForm from "./SignupForm";
 import Home from "./Home";
 import Dashboard from "./Dashboard";
 import NavBar from "./NavBar";
 
+// need to make sure when i reload dashboard it goes back to login
+// change all functions to arrow functions in all components 
+
 function App() {
   const [user, setUser] = useState(null);
-  const [workouts, setWorkouts] = useState([]);
+  const [allWorkouts, setAllWorkouts] = useState([]);
   const [showNewWorkoutForm, setShowNewWorkoutForm] = useState(false);
 
   useEffect(() => {
-    fetch("http://localhost:5555/check_session", {
+    fetch("/check_session", {
       method: "GET",
       credentials: "include",
     })
-      .then((response) => {
-        if (response.ok) return response.json();
-        throw new Error("Not logged in");
-      })
-      .then(setUser)
-      .catch(() => setUser(null));
-  }, []);
-
-  useEffect(() => {
-    fetch("http://localhost:5555/workouts")
       .then((response) => response.json())
-      .then(setWorkouts);
+      .then((user) => {
+        if (user.username) {
+          setUser(user)
+        } 
+      })
+        
+    fetch("/workouts", {
+      method: "GET",
+      credentials: "include",
+    })  
+      .then((response) => response.json())
+      .then(setAllWorkouts)
   }, []);
 
   function handleLogout() {
@@ -40,47 +44,25 @@ function App() {
   return (
     <Router>
       <NavBar user={user} onLogout={handleLogout} />
-      <Switch>
-        <Route exact path="/" component={Home} />
-        <Route
-          path="/login"
-          render={() =>
-            user ? (
-              <Redirect to="/dashboard" />
-            ) : (
-              <LoginForm onLogin={setUser} setWorkouts={setWorkouts} />
-            )
-          }
-        />        
-        <Route
-          path="/signup"
-          render={() =>
-            user ? (
-              <Redirect to="/dashboard" />
-            ) : (
-              <SignupForm onSignup={setUser} setWorkouts={setWorkouts} />
-            )
-          }
-        />
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/login" element={<LoginForm user={user} onLogin={setUser} />} />  
+        <Route path="/signup" element={<SignupForm user={user} onSignup={setUser} setAllWorkouts={setAllWorkouts} />} />      
         <Route
           path="/dashboard"
-          render={() =>
-            user ? (
-              <Dashboard
-                user={user}
-                setUser={setUser}
-                workouts={workouts}
-                setWorkouts={setWorkouts}
-                showNewWorkoutForm={showNewWorkoutForm}
-                setShowNewWorkoutForm={setShowNewWorkoutForm}
-              />
-            ) : (
-              <Redirect to="/login" />
-            )
+          element={
+            <Dashboard
+              user={user}
+              setUser={setUser}
+              allWorkouts={allWorkouts}
+              setAllWorkouts={setAllWorkouts}
+              showNewWorkoutForm={showNewWorkoutForm}
+              setShowNewWorkoutForm={setShowNewWorkoutForm}
+            />
           }
         />
-        <Route render={() => <h2>404: Page not found</h2>} />
-      </Switch>
+        <Route path="*" element={<h2>404: Page not found</h2>} />
+      </Routes>
     </Router>
   );
 }
