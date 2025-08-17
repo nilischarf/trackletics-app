@@ -45,23 +45,25 @@ class Login(Resource):
 
         user = User.query.filter_by(username=username).first()
 
-        if user and user.authenticate(password):
-            session['user_id'] = user.id
+        if not user or not user.authenticate(password):
+                return {"error": "Username or password is incorrect."}, 401
+        
+        session['user_id'] = user.id
 
-            workout_dict = {}
-            for stat in user.health_stats:
-                w_id = stat.workout_id
-                if w_id not in workout_dict:
-                    workout_dict[w_id] = {
-                        **stat.workout.to_dict(),
-                        "health_stats": []
-                    }
-                workout_dict[w_id]["health_stats"].append(stat.to_dict())
+        workout_dict = {}
+        for stat in user.health_stats:
+            w_id = stat.workout_id
+            if w_id not in workout_dict:
+                workout_dict[w_id] = {
+                    **stat.workout.to_dict(),
+                    "health_stats": []
+                }
+            workout_dict[w_id]["health_stats"].append(stat.to_dict())
 
-            user_data = user.to_dict()
-            user_data["workouts"] = list(workout_dict.values())
+        user_data = user.to_dict()
+        user_data["workouts"] = list(workout_dict.values())
 
-            return user_data, 200
+        return user_data, 200
 
 class Logout(Resource):
     def delete(self):
