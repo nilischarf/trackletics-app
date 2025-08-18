@@ -1,14 +1,12 @@
 import React, { useState } from "react";
 import { Formik } from "formik";
 
-  //  CHANGE FUNCTIONS TO ARROW FUNCTIONS
-
 function EditHealthStatForm({ stat, onUpdateStat }) {
   const [calories, setCalories] = useState(stat.calories_burned);
   const [hydration, setHydration] = useState(stat.hydration);
   const [soreness, setSoreness] = useState(stat.soreness);
 
-  function handleSubmit(e) {
+  const handleSubmit = (e) => {
   e.preventDefault();
   fetch(`http://localhost:5555/health_stats/${stat.id}`, {
     method: "PATCH",
