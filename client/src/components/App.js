@@ -6,9 +6,6 @@ import Home from "./Home";
 import Dashboard from "./Dashboard";
 import NavBar from "./NavBar";
 
-// need to make sure when i reload dashboard it goes back to login
-// change all functions to arrow functions in all components 
-
 function App() {
   const [user, setUser] = useState(null);
   const [allWorkouts, setAllWorkouts] = useState([]);

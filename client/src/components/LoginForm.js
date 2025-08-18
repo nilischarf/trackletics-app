@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import { Formik } from "formik";
 import { Navigate } from "react-router-dom";
 
-//  CHANGE FUNCTIONS TO ARROW FUNCTIONS
 
 function LoginForm({ onLogin, user }) {
   const [username, setUsername] = useState("");
@@ -12,7 +11,7 @@ function LoginForm({ onLogin, user }) {
     return <Navigate to="/dashboard" />;
   }
 
-  function handleSubmit(e) {
+  const handleSubmit = (e) => {
     e.preventDefault();
     fetch("http://localhost:5555/login", {
       method: "POST",
@@ -20,7 +19,15 @@ function LoginForm({ onLogin, user }) {
       credentials: "include",
       body: JSON.stringify({ username, password }),
     })
-      .then((response) => response.ok ? response.json() : Promise.reject("Signup failed"))
+      .then((response) => {
+        if (response.ok) {
+          return response.json()
+        } else {
+          return response.json().then((err) => {
+            return Promise.reject(err.error || "Signup failed")
+          })
+        }
+      })
       .then((user) => {
         onLogin(user);
       })

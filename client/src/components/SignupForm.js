@@ -10,7 +10,7 @@ function SignupForm({ onSignup, user }) {
     return <Navigate to="/dashboard" />;
   }
 
-  function handleSubmit(e) {
+  const handleSubmit = (e) => {
     e.preventDefault();
     fetch("http://localhost:5555/signup", {
       method: "POST",
@@ -18,7 +18,15 @@ function SignupForm({ onSignup, user }) {
       credentials: "include",
       body: JSON.stringify({ username, password }),
     })
-      .then((response) => response.ok ? response.json() : Promise.reject("Signup failed"))
+      .then((response) => {
+        if (response.ok) {
+          return response.json()
+        } else {
+          return response.json().then((err) => {
+            return Promise.reject(err.error || "Signup failed")
+          })
+        }
+      })
       .then((user) => {
         onSignup(user);
       })
